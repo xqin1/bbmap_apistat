@@ -1,0 +1,69 @@
+{
+	"_id" : dateAndHour, //2011091100
+	"count":0,
+	"apiCountByLocation":{
+			 "CAI-findClosestByCoordinates" : [0,0,0,....], //array length = hex number, 2835
+ 			"Broadband-findWirelineServiceByCoordinates":[0,0,0,....], //array length = hex number, 2835
+ 			"Demographic-findByCordinates":[0,0,0,....], //array length = hex number, 2835
+ 			"Broadband-findWirelessServiceByCoordinates":[0,0,0,....],//array length = hex number, 2835
+ 			"Census-findByCoordinates":[0,0,0,....] //array length = hex number, 2835
+	},
+	"apiCountByName":{
+			"CAI-findClosestByCoordinates" : 0,
+ 			"Broadband-findWirelineServiceByCoordinates": 0,
+ 			"Demographic-findByCordinates":0,
+ 			"Broadband-findWirelessServiceByCoordinates": 0,
+ 			"Census-findByCoordinates": 0,
+			 "ProviderFeedback-findProviderFeedbackByBlockId" : 0,
+ 			 "Provider-getAllProviders": 0,
+ 			 "Census-findGeographyByFips" : 0,
+ 			"Almanac-findAllRankingsByGeographyIdWithinState": 0,
+ 			"Almanac-findRankingsByGeographyIdWithinNation": 0,
+ 			"BIP-findByNation": 0,
+ 			"Almanac-getAlmanacParameters": 0,
+ 			"SpeedTest-findForNation": 0,
+ 			"SpeedTest-findMinAndMaxQuartileSpeedsByGeographyType": 0,
+ 			"BIP-findByStateIds": 0,
+ 			"GEOGRAPHY-findGeographiesByStateId": 0,
+ 			"Almanac-findAllRankingsWithinState": 0,
+ 			"Provider-findByProviderWithinNation": 0,
+ 			"Provider-findSimilarProvidersWithinNation": 0,
+ 			"BroadbandSummary-findBroadbandSummaryByNation": 0,
+ 			"Demographic-findForNation": 0,
+ 			"BroadbandSummary-findBroadbandSummaryByGeographyId": 0,
+ 			"CAI-findByGeographyTypeAndId": 0,
+ 			"Demographic-findByGeographyTypeAndId": 0,
+ 			"GEOGRAPHY-findGeographiesByType": 0,
+ 			"Provider-findProvidersByNameWithinGeography": 0,
+ 			"Provider-findByProviderWithinGeography": 0,
+ 			"GEOGRAPHY-findGeographyByStateAndName": 0,
+ 			"Provider-findProvidersWithinGeography": 0,
+ 			"Provider-findSimilarProvidersWithinGeography": 0,
+			 "Almanac-findAllRankingsWithinNation": 0,
+			 "CAI-findCAIForNation": 0,
+ 			"Provider-findByProviderWithinState": 0,
+ 			"Provider-findProvidersWithinState": 0,
+ 			"Provider-findSimilarProvidersWithinState": 0,
+ 			"BIP-findByStateNames": 0,
+ 			"Provider-findProvidersByName": 0,
+ 			"BTOP-findByStateIds": 0,
+ 			"BTOP-findByStateNames": 0,
+ 			"Census-findGeographyByName": 0,
+ 			"CAI-findByGeographyTypeAndName": 0,
+ 			"GEOGRAPHY-findGeographyById": 0,
+ 			"SpeedTest-findByGeographyTypeAndId": 0,
+ 			"SpeedTest-findByGeographyTypeAndName": 0,
+ 			"Provider-getProviderParameters": 0,
+ 			"BTOP-findByNation": 0,
+ 			"Demographic-findByGeographyTypeAndName": 0,
+ 			"GEOGRAPHY-findGeographyByName": 0,
+ 			"Provider-findProvidersWithinNation": 0,
+			 "Provider-findProvidersByNameWithinNation": 0,
+ 			"AVAILABILITY-findByStateId": 0,
+ 			"AVAILABILITY-findByCountyName": 0,
+ 			"AVAILABILITY-findByCountyIds": 0,
+ 			"AVAILABILITY-findByStateName": 0,
+ 			"AVAILABILITY-findByNation":0
+		}
+
+}
