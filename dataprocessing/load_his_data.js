@@ -82,8 +82,8 @@ var apiStatSummary = db.collection("apistatssummary");
 var hex75k = db.collection("hex_75k");
 
 
-//var stopTime = moment("2013-09-12 16:00:00").unix();//.seconds();
-var stopTime = moment("2011-09-21 16:00:00").unix();//.seconds();
+var stopTime = moment("2013-09-12 16:00:00").unix();//.seconds();
+//var stopTime = moment("2011-09-27 12:00:00").unix();//.seconds();
 var stopID =new ObjectID.createFromTime(stopTime);
 var projection = {"apiName":1, "latlng":1, "date":1, "isGeospatialAPI":1,"responseTime":1};
 var spatialProjection = {"_id":0,"properties.gid":1};
@@ -93,7 +93,7 @@ mongoClient.open(function(err,mongoClient){
 	if (err) throw err;
 	console.log("mongo client connected");
 
-	var startTime = moment("2011-09-21 14:00:00");
+	var startTime = moment("2011-09-27 11:00:00");
 	var startID =new ObjectID.createFromTime(startTime.unix());
 	//at beginning of the hour, create the new document, delte if existes
 	var q = {"_id": {"$gte": startTime.unix(), "$lte": stopTime}};
@@ -128,6 +128,7 @@ mongoClient.open(function(err,mongoClient){
 
 				numCount += results.length;
 				console.log("number of records: " + results.length);
+
 				function iterator(r,callback){
 					newSummaryDoc.count++;
 					if (typeof newSummaryDoc.apiCountByName[r.apiName] == "undefined"){
@@ -140,10 +141,10 @@ mongoClient.open(function(err,mongoClient){
 						newSummaryDoc.apiCountByName[r.apiName].responseTime = (newSummaryDoc.apiCountByName[r.apiName].responseTime * (newSummaryDoc.apiCountByName[r.apiName].count-1) 
 																								+ r.responseTime)/newSummaryDoc.apiCountByName[r.apiName].count;
 					}
-					if (r.isGeospatialAPI){
+					if (r.isGeospatialAPI && !isNaN(r.latlng.long) && !isNaN(r.latlng.lat) && r.latlng.lat < 90 && r.latlng.lat > -90 && r.latlng.long>-180 && r.latlng.long<180){
 						var spatialQuery = {geometry:{$geoIntersects:{$geometry:{type:"Point",coordinates:[r.latlng.long,r.latlng.lat]}}}};
 						hex75k.findOne(spatialQuery,spatialProjection,function(err, hex){
-							if (err) throw err;
+							if (err) {throw err};
 							if (hex != null){
 								if (typeof newSummaryDoc.apiCountByLocation[r.apiName] == "undefined"){
 									newSummaryDoc.apiCountByLocation[r.apiName] = {};
