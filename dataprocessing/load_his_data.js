@@ -1,7 +1,8 @@
 var MongoClient = require('mongodb').MongoClient,
 	Server = require('mongodb').Server,
 	ObjectID = require('mongodb').ObjectID
-	moment = require('moment');
+	moment = require('moment')
+	async = require('async');
 var apiStatSummaryDoc = {
 	"_id" : "", //2011091100
 	"count":0,
@@ -71,24 +72,28 @@ var apiStatSummaryDoc = {
 		}
 }
 
-
+var numCount = 0;
+var processStart = moment();
 var mongoClient = new MongoClient(new Server('localhost', 27017,
 										{'native_parser' : true}));
 var db = mongoClient.db('gisdb');
 var apiStat = db.collection("apistatsmessagedocs");
 var apiStatSummary = db.collection("apistatssummary");
+var hex75k = db.collection("hex_75k");
 
 
-var stopTime = moment("2012-09-21 02:00:00").unix();//.seconds();
+//var stopTime = moment("2013-09-12 16:00:00").unix();//.seconds();
+var stopTime = moment("2011-09-21 16:00:00").unix();//.seconds();
 var stopID =new ObjectID.createFromTime(stopTime);
 var projection = {"apiName":1, "latlng":1, "date":1, "isGeospatialAPI":1,"responseTime":1};
+var spatialProjection = {"_id":0,"properties.gid":1};
 
 
 mongoClient.open(function(err,mongoClient){
 	if (err) throw err;
 	console.log("mongo client connected");
 
-	var startTime = moment("2012-09-21 00:00:00");
+	var startTime = moment("2011-09-21 14:00:00");
 	var startID =new ObjectID.createFromTime(startTime.unix());
 	//at beginning of the hour, create the new document, delte if existes
 	var q = {"_id": {"$gte": startTime.unix(), "$lte": stopTime}};
@@ -101,7 +106,8 @@ mongoClient.open(function(err,mongoClient){
 	function processHourlyData(){
 		
 		if (startTime.unix() > stopTime){
-			console.log("client closed");
+			var processEnd = moment();
+			console.log("client closed. Process " + numCount + " records takes " + processEnd.diff(processStart, 'minutes') + " minutes");
 			mongoClient.close();
 		} else{
 			
@@ -119,7 +125,10 @@ mongoClient.open(function(err,mongoClient){
 			var cursor = apiStat.find(query,projection);
 			cursor.toArray(function(err,results){
 				if (err) {console.log("error");congoClient.close();throw err};
-				results.forEach(function(r){
+
+				numCount += results.length;
+				console.log("number of records: " + results.length);
+				function iterator(r,callback){
 					newSummaryDoc.count++;
 					if (typeof newSummaryDoc.apiCountByName[r.apiName] == "undefined"){
 						newSummaryDoc.apiCountByName[r.apiName] = {};
@@ -128,15 +137,79 @@ mongoClient.open(function(err,mongoClient){
 					}
 					else{
 						newSummaryDoc.apiCountByName[r.apiName].count++;
-						newSummaryDoc.apiCountByName[r.apiName].responseTime = (newSummaryDoc.apiCountByName[r.apiName].responseTime + r.responseTime)/newSummaryDoc.apiCountByName[r.apiName].count;
+						newSummaryDoc.apiCountByName[r.apiName].responseTime = (newSummaryDoc.apiCountByName[r.apiName].responseTime * (newSummaryDoc.apiCountByName[r.apiName].count-1) 
+																								+ r.responseTime)/newSummaryDoc.apiCountByName[r.apiName].count;
 					}
+					if (r.isGeospatialAPI){
+						var spatialQuery = {geometry:{$geoIntersects:{$geometry:{type:"Point",coordinates:[r.latlng.long,r.latlng.lat]}}}};
+						hex75k.findOne(spatialQuery,spatialProjection,function(err, hex){
+							if (err) throw err;
+							if (hex != null){
+								if (typeof newSummaryDoc.apiCountByLocation[r.apiName] == "undefined"){
+									newSummaryDoc.apiCountByLocation[r.apiName] = {};
+								}
+
+								if (typeof newSummaryDoc.apiCountByLocation[r.apiName][hex.properties.gid] == "undefined"){
+									newSummaryDoc.apiCountByLocation[r.apiName][hex.properties.gid] = 1;
+								}else{
+									newSummaryDoc.apiCountByLocation[r.apiName][hex.properties.gid]++;
+								}
+								//console.log(hex)
+							}
+							callback();
+						});
+					}else{
+						callback();
+					}
+				}
+
+				async.forEach(results,iterator,done);
+
+
+
+				// results.forEach(function(r){
+				// 	newSummaryDoc.count++;
+				// 	if (typeof newSummaryDoc.apiCountByName[r.apiName] == "undefined"){
+				// 		newSummaryDoc.apiCountByName[r.apiName] = {};
+				// 		newSummaryDoc.apiCountByName[r.apiName].count = 1;
+				// 		newSummaryDoc.apiCountByName[r.apiName].responseTime = r.responseTime;
+				// 	}
+				// 	else{
+				// 		newSummaryDoc.apiCountByName[r.apiName].count++;
+				// 		newSummaryDoc.apiCountByName[r.apiName].responseTime = (newSummaryDoc.apiCountByName[r.apiName].responseTime * (newSummaryDoc.apiCountByName[r.apiName].count-1) 
+				// 																				+ r.responseTime)/newSummaryDoc.apiCountByName[r.apiName].count;
+				// 	}
+
+				// 	//location query
+				// 	if (r.isGeospatialAPI){
+				// 		var spatialQuery = {geometry:{$geoIntersects:{$geometry:{type:"Point",coordinates:[r.latlng.long,r.latlng.lat]}}}};
+				// 		hex75k.findOne(spatialQuery,spatialProjection,function(err, hex){
+				// 			if (err) throw err;
+				// 			if (hex != null){
+				// 				if (typeof newSummaryDoc.apiCountByLocation[r.apiName] == "undefined"){
+				// 					newSummaryDoc.apiCountByLocation[r.apiName] = {};
+				// 				}
+
+				// 				// if (typeof newSummaryDoc.apiCountByLocation[r.apiName][hex.properties.gid] == "undefined"){
+				// 				// 	newSummaryDoc.apiCountByLocation[r.apiName][hex.properties.gid] = 1;
+				// 				// }else{
+				// 				// 	newSummaryDoc.apiCountByLocation[r.apiName][hex.properties.gid]++;
+				// 				// }
+				// 				console.log(hex)
+				// 			}
+				// 		})
+				// 	}
 					
-				})
+				// })
 				//insert new doc
-				apiStatSummary.insert(newSummaryDoc, function(err, result){
+				function done(err){
 					if (err) throw err;
-					processHourlyData();
-				})
+
+					apiStatSummary.insert(newSummaryDoc, function(err, result){
+						if (err) throw err;
+						processHourlyData();
+					})
+				}
 			//processHourlyData();
 
 			})
