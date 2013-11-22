@@ -2,7 +2,8 @@ var MongoClient = require('mongodb').MongoClient,
 	Server = require('mongodb').Server,
 	ObjectID = require('mongodb').ObjectID
 	moment = require('moment')
-	async = require('async');
+	async = require('async'),
+	fs = require('fs');
 var apiStatSummaryDoc = {
 	"_id" : "", //2011091100
 	"count":0,
@@ -83,10 +84,12 @@ var hex75k = db.collection("hex_75k");
 
 
 var stopTime = moment("2013-09-12 16:00:00").unix();//.seconds();
-//var stopTime = moment("2011-09-27 12:00:00").unix();//.seconds();
+//var stopTime = moment("2011-09-28 12:00:00").unix();//.seconds();
 var stopID =new ObjectID.createFromTime(stopTime);
 var projection = {"apiName":1, "latlng":1, "date":1, "isGeospatialAPI":1,"responseTime":1};
 var spatialProjection = {"_id":0,"properties.gid":1};
+
+var rs = fs.createWriteStream('../log/dataprocessing.log',{flags:'a'});
 
 
 mongoClient.open(function(err,mongoClient){
@@ -94,7 +97,6 @@ mongoClient.open(function(err,mongoClient){
 	console.log("mongo client connected");
 
 	var startTime = moment("2011-09-27 11:00:00");
-	var startID =new ObjectID.createFromTime(startTime.unix());
 	//at beginning of the hour, create the new document, delte if existes
 	var q = {"_id": {"$gte": startTime.unix(), "$lte": stopTime}};
 	apiStatSummary.remove(q,function(err,result){
@@ -109,6 +111,7 @@ mongoClient.open(function(err,mongoClient){
 			var processEnd = moment();
 			console.log("client closed. Process " + numCount + " records takes " + processEnd.diff(processStart, 'minutes') + " minutes");
 			mongoClient.close();
+			rs.end();
 		} else{
 			
 
@@ -116,18 +119,24 @@ mongoClient.open(function(err,mongoClient){
 			//create new document
 			var newSummaryDoc = {"_id": startTime.unix(),"count":0, "apiCountByLocation":{}, "apiCountByName":{}};
 
+			var startID =new ObjectID.createFromTime(startTime.unix());
 			//start time now increase by 1 hour
 			var endID =  new ObjectID.createFromTime(startTime.add('h',1).unix());
 			var query = {"_id": {"$gte": new ObjectID(startID.toHexString()), "$lt": new ObjectID(endID.toHexString())}};
+			
+			rs.write(JSON.stringify(query) + "\n");
 			msg += startTime.toString();
 			console.log(msg);
+			rs.write(msg + "\n");
 
 			var cursor = apiStat.find(query,projection);
 			cursor.toArray(function(err,results){
 				if (err) {console.log("error");congoClient.close();throw err};
 
 				numCount += results.length;
-				console.log("number of records: " + results.length);
+
+				console.log("number of records: " + results.length + ", total recoreds:" + numCount);
+				rs.write("number of records: " + results.length + ", total recoreds:" + numCount + "\n");
 
 				function iterator(r,callback){
 					newSummaryDoc.count++;
